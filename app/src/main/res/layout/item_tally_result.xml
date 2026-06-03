@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:text="2026/04/01"
+        android:textSize="16sp"
+        android:textColor="#333333"/>
+
+    <TextView
+        android:id="@+id/tvCount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="5回"
+        android:textSize="16sp"
+        android:textAlignment="viewEnd"
+        android:textColor="#2196F3"/>
+
+    <TextView
+        android:id="@+id/tvCost"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.2"
+        android:text="500円"
+        android:textSize="16sp"
+        android:textAlignment="viewEnd"
+        android:textStyle="bold"
+        android:textColor="#E91E63"/>
+</LinearLayout>

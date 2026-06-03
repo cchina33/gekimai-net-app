@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">オンゲキ-maimaiツール</string>
+    <string name="btn_analyzer_text">あならいざもどき2</string>
+    <string name="btn_jewedrops_text">ジェル+しずく数取得</string>
+    <string name="btn_playcount_text">プレイ履歴集計</string>
+    <string name="btn_scorelog_text">ScoreLog登録</string>
+    <string name="btn_settings_text">設定</string>
+    <string name="btn_ongekinet_text">オンゲキ-NET</string>
+    <string name="btn_maimainet_text">maimai でらっくすNET</string>
+</resources>
