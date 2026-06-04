@@ -99,6 +99,11 @@ class MainActivity : AppCompatActivity() {
         val btnSwitchMaimai: Button = findViewById(R.id.btnSwitchMaimai)
         val btnSettings: Button = findViewById(R.id.btnSettings)
 
+        val swipeRefreshLayout = findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+        swipeRefreshLayout.setOnRefreshListener {
+            webView.reload() // 下に引っ張ったらリロードする
+        }
+
         viewPager = findViewById(R.id.buttonViewPager)
         val adapter = ButtonPagerAdapter(
             onTallyClick = { executeTally() },
@@ -532,6 +537,8 @@ class MainActivity : AppCompatActivity() {
     private val myWebViewClient = object : WebViewClient() {
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
+            // ページの読み込みが完了したら、ぐるぐるを非表示にする
+            (view?.parent as? androidx.swiperefreshlayout.widget.SwipeRefreshLayout)?.isRefreshing = false
             CookieManager.getInstance().flush()
 
             if (view != null) {
@@ -579,7 +586,9 @@ class MainActivity : AppCompatActivity() {
 
             if (url != null) handleAutoLogin(url)
         }
+
     }
+
     // =============================================
 
     private fun handleAutoLogin(url: String) {
