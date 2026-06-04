@@ -1,4 +1,4 @@
-# OngekiApp プロジェクト概要
+# オンゲキ-maimaiツール 概要
 
 ## 1. アプリ名
 - **オンゲキ-maimaiツール** (パッケージ: `com.miahina.ongekimai`)
