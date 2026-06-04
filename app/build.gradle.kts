@@ -50,4 +50,9 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     // WebViewを引っ張って更新
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // DataStore & Tink
+    implementation("androidx.datastore:datastore-preferences:1.1.2")
+    implementation("com.google.crypto.tink:tink-android:1.15.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
