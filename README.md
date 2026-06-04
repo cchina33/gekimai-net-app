@@ -13,11 +13,12 @@
 - **拡張機能 (JavaScript 注入)**:
     - **プレイ履歴集計**: 過去のプレイ履歴をバックグラウンドで取得・集計。
     - **ジュエル情報取得**: 所持ジュエル等の情報を同期。
-    - **あならいざもどき2**: あならいざもどきも起動。
+    - **あならいざもどき2**: あならいざもどきを起動。
     - **ScoreLog 連携**: 外部サービス「OngekiScoreLog」へのスコア登録。
 - **自動ログイン & 認証情報管理**:
     - 設定された SEGA ID とパスワードを用いて、ログイン画面で自動的にフォームを入力。
-    - `EncryptedSharedPreferences` を使用し、認証情報を安全に暗号化して保存。
+    - `Jetpack DataStore (Preferences)` と `Google Tink` を使用し、認証情報を安全に暗号化（AES256_GCM）して保存。
+    - `EncryptedSharedPreferences` からの自動移行機能を搭載。
 - **セキュリティ**:
     - 生体認証（指紋・顔認証）またはデバイス認証によるアプリ起動ロック。
 - **UX/UI**:
@@ -39,10 +40,11 @@
     - `BiometricPrompt` (生体認証)
     - `AlarmManager` (正確なアラーム設定による通知)
     - `NotificationManager` (通知チャンネル管理)
+    - `Jetpack DataStore` & `Google Tink` (セキュリティ・永続化)
 
 ## 5. ファイル構成 (主要なもの)
 - `MainActivity.kt`: アプリのメインロジック、WebView 制御、通知・認証処理。
-- `CredentialManager.kt`: 設定や認証情報の永続化管理。
+- `CredentialManager.kt`: 設定や認証情報の永続化管理（DataStore + Tink 移行済み）。
 - `assets/`: 注入用の JavaScript ファイル (`analyzer.js`, `get_jewels.js`, `on-mai_PlayTally.js` 等)。
 - `res/layout/`:
     - `activity_main.xml`: メイン画面。
