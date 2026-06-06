@@ -7,4 +7,5 @@
     <string name="btn_settings_text">設定</string>
     <string name="btn_ongekinet_text">オンゲキ-NET</string>
     <string name="btn_maimainet_text">maimai でらっくすNET</string>
+    <string name="btn_crop_text">範囲選択撮影</string>
 </resources>

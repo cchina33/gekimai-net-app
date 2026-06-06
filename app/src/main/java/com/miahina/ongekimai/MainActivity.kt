@@ -1,48 +1,38 @@
 package com.miahina.ongekimai
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Message
 import android.util.Base64
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
-import android.widget.EditText
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SwitchCompat
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.viewpager2.widget.ViewPager2
+import com.yalantis.ucrop.UCrop
 import java.io.File
-import java.io.FileOutputStream
-import java.util.Calendar
 import java.util.concurrent.Executor
-import androidx.core.net.toUri
-import java.util.Locale
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     ) { isGranted: Boolean ->
         if (isGranted) {
             showToast("通知が許可されました。リマインダーをセットします。")
-            scheduleDailyReminder() // 許可されたらアラームをセット
+            NotificationHelper.scheduleDailyReminder(this) // 許可されたらアラームをセット
         } else {
             showToast("通知が拒否されたため、リマインダーが届かない可能性があります。")
         }
@@ -83,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         rootLayout = findViewById(android.R.id.content)
 
         // アプリ起動時に通知チャンネルを作成
-        createNotificationChannel()
+        NotificationHelper.createNotificationChannel(this)
 
         // 毎日のリマインダーをセット
         checkAndRequestNotificationPermission()
@@ -110,7 +100,8 @@ class MainActivity : AppCompatActivity() {
             onGetJewelsClick = { executeGetJewels() },
             onAnalyzerClick = { executeAnalyzer() },
             onScoreLogClick = { executeScoreLog() },
-            onNotificationTestClick = { sendTestNotification() }
+            onNotificationTestClick = { sendTestNotification() },
+            onSelectiveScreenshotClick = { startSelectiveScreenshot() }
         )
         viewPager.adapter = adapter
 
@@ -147,7 +138,10 @@ class MainActivity : AppCompatActivity() {
 
         btnSwitchOngeki.setOnClickListener { webView.loadUrl("https://ongeki-net.com/ongeki-mobile/") }
         btnSwitchMaimai.setOnClickListener { webView.loadUrl("https://maimaidx.jp/maimai-mobile/") }
-        btnSettings.setOnClickListener { showCombinedSettingsDialog() }
+        btnSettings.setOnClickListener {
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     // 💡 シンプルで安全なWebChromeClient（画像奪取はJavaScriptフックで行うため軽量化）
@@ -267,19 +261,29 @@ class MainActivity : AppCompatActivity() {
     // 💡 ビットマップ画像をストレージ（Downloadフォルダ）に保存する（名前衝突回避版）
     private fun saveBitmapToStorage(bitmap: Bitmap, index: Int = 0): Boolean {
         return try {
-            // 同時保存でもファイル名が被らないようにインデックスを付与
-            val suffix = if (index > 0) "_$index" else ""
-            val filename = "maimai_rating_${System.currentTimeMillis()}$suffix.png"
-            val downloadDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadDir, filename)
-
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            // Android 10 (API 29) 以上での推奨される保存方法 (MediaStore)
+            val resolver = contentResolver
+            val contentValues = android.content.ContentValues().apply {
+                val suffix = if (index > 0) "_$index" else ""
+                val filename = "ongeki_tool_${System.currentTimeMillis()}$suffix.png"
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
-            true
+
+            val imageUri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            if (imageUri != null) {
+                resolver.openOutputStream(imageUri).use { out ->
+                    if (out != null) {
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                }
+                true
+            } else {
+                false
+            }
         } catch (e: Exception) {
-            Log.e("MAL_ANALYZER", "画像の保存に失敗しました", e)
+            Log.e("STORAGE_ERROR", "画像の保存に失敗しました", e)
             false
         }
     }
@@ -426,103 +430,9 @@ class MainActivity : AppCompatActivity() {
         """.trimIndent()
     }
 
-    // ======= MainActivity 内の showCombinedSettingsDialog() を以下に差し替え =======
-    private fun showCombinedSettingsDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
-        val etSegaId = dialogView.findViewById<EditText>(R.id.etSegaId)
-        val etSegaPassword = dialogView.findViewById<EditText>(R.id.etSegaPassword)
-        val etScoreLogJs = dialogView.findViewById<EditText>(R.id.etScoreLogJs)
-        val rgColorMode = dialogView.findViewById<RadioGroup>(R.id.rgColorMode)
-        val switchBiometric = dialogView.findViewById<SwitchCompat>(R.id.switchBiometric)
-
-        // 💡 今回追加したリマインダー用UIの紐付け
-        val switchReminder = dialogView.findViewById<SwitchCompat>(R.id.switchReminder)
-        val layoutReminderTime = dialogView.findViewById<android.widget.LinearLayout>(R.id.layoutReminderTime)
-        val tvReminderTime = dialogView.findViewById<TextView>(R.id.tvReminderTime)
-
-        // 既存データの読み込み
-        etSegaId.setText(credentialManager.getId())
-        etSegaPassword.setText(credentialManager.getPassword())
-        etScoreLogJs.setText(credentialManager.getScoreLogJs())
-        switchBiometric.isChecked = credentialManager.isBiometricEnabled()
-
-        // 💡 リマインダーの初期状態を設定
-        switchReminder.isChecked = credentialManager.isReminderEnabled()
-        var selectedHour = credentialManager.getReminderHour()
-        var selectedMinute = credentialManager.getReminderMinute()
-        tvReminderTime.text = String.format(Locale.getDefault(), "%02d:%02d", selectedHour, selectedMinute)
-
-        // 💡 スイッチのON/OFFで時間設定エリアの表示・非表示を切り替え ＆ 権限チェック
-        layoutReminderTime.visibility = if (switchReminder.isChecked) View.VISIBLE else View.GONE
-
-        switchReminder.setOnCheckedChangeListener { _, isChecked ->
-            layoutReminderTime.visibility = if (isChecked) View.VISIBLE else View.GONE
-
-            // 💡 ONにされた時、Android 12以上であれば「正確なアラーム権限」があるかチェックする
-            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-
-                // まだ権限が許可されていない場合、システムの設定画面へ誘導する
-                if (!alarmManager.canScheduleExactAlarms()) {
-                    // ユーザーに理由を伝えるトーストやダイアログを挟むとより親切です
-                    showToast("正確な時間に通知を表示するため、次の画面でこのアプリを許可してください。")
-
-                    try {
-                        val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                            data = "package:$packageName".toUri()
-                        }
-                        startActivity(intent)
-                    } catch (e: Exception) {
-                        Log.e("Notification", "設定画面への遷移に失敗しました", e)
-                    }
-                }
-            }
-        }
-
-        // 時間のテキストをタップしたらタイムピッカーを表示する
-        tvReminderTime.setOnClickListener {
-            android.app.TimePickerDialog(this, { _, hourOfDay, minute ->
-                selectedHour = hourOfDay
-                selectedMinute = minute
-                tvReminderTime.text = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
-            }, selectedHour, selectedMinute, true).show()
-        }
-
-        when (credentialManager.getColorMode()) {
-            1 -> dialogView.findViewById<RadioButton>(R.id.rbThemeLight).isChecked = true
-            2 -> dialogView.findViewById<RadioButton>(R.id.rbThemeDark).isChecked = true
-            else -> dialogView.findViewById<RadioButton>(R.id.rbThemeSystem).isChecked = true
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("⚙️ アプリの設定")
-            .setView(dialogView)
-            .setPositiveButton("保存") { _, _ ->
-                // 各種保存処理
-                credentialManager.saveCredentials(etSegaId.text.toString(), etSegaPassword.text.toString())
-                credentialManager.saveScoreLogJs(etScoreLogJs.text.toString())
-                val selectedMode = when (rgColorMode.checkedRadioButtonId) {
-                    R.id.rbThemeLight -> 1
-                    R.id.rbThemeDark -> 2
-                    else -> 0
-                }
-                credentialManager.saveColorMode(selectedMode)
-                applySavedColorMode()
-                credentialManager.saveBiometricEnabled(switchBiometric.isChecked)
-                if (!switchBiometric.isChecked) isAuthCleared = true
-
-                // 💡 リマインダー設定の保存
-                credentialManager.saveReminderEnabled(switchReminder.isChecked)
-                credentialManager.saveReminderTime(selectedHour, selectedMinute)
-
-                // 💡 スケジュールを新しい設定で更新（オフならここで自動解除されます）
-                scheduleDailyReminder()
-
-                webView.reload()
-                showToast("設定を保存しました")
-            }
-            .setNegativeButton("キャンセル", null)
-            .show()
+    override fun onResume() {
+        super.onResume()
+        applySavedColorMode()
     }
 
     private fun applySavedColorMode() {
@@ -622,97 +532,6 @@ class MainActivity : AppCompatActivity() {
         android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT).show()
     }
 
-    // ======= 通知チャンネルの作成関数 =======
-    private fun createNotificationChannel() {
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        // ======= 🗑️ 登録済みの全チャンネルを自動で取得して一括削除 =======
-        try {
-            // 現在アプリに登録されているすべての通知チャンネルを取得
-            val existingChannels = notificationManager.notificationChannels
-            for (channel in existingChannels) {
-                // チャンネルを1つずつ削除
-                notificationManager.deleteNotificationChannel(channel.id)
-            }
-            Log.d("Notification", "すべての古いチャンネルを一括削除しました")
-        } catch (e: Exception) {
-            Log.e("Notification", "チャンネルの削除中にエラーが発生しました", e)
-        }
-
-        // --- 1つ目のチャンネル（既存：お知らせ用） ---
-        val channel1 = NotificationChannel(
-            "mia_login_channel", // ID
-            "美亜からのメッセージ", // 設定画面でユーザーに見える名前
-            NotificationManager.IMPORTANCE_HIGH //  割り込み表示（ポップアップ）させたい場合はHIGH
-        ).apply {
-            description = "アプリからの通知やアップデート情報をお知らせします"
-        }
-        notificationManager.createNotificationChannel(channel1)
-
-        // 月替わりリマインダー用のチャンネル
-        val monthChannel = NotificationChannel(
-            "mia_monthlogin_channel",
-            "美亜からの月替わり通知",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "月ごとにメッセージが変化する毎日のリマインダー通知です"
-        }
-        notificationManager.createNotificationChannel(monthChannel)
-    }
-
-    // === 毎日夜20時にスケジュールする ===
-
-    // ======= MainActivity 内の関数をこのように変更してください =======
-    private fun scheduleDailyReminder() {
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, ReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent, PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // スイッチがオフなら解除
-        if (!credentialManager.isReminderEnabled()) {
-            alarmManager.cancel(pendingIntent)
-            Log.d("Notification", "リマインダーがオフに設定されたため、アラームを解除しました")
-            return
-        }
-
-        val hour = credentialManager.getReminderHour()
-        val minute = credentialManager.getReminderMinute()
-
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-        }
-
-        // 💡 念のため、現在時刻から「10秒以上」未来であることを保証する（過去の時間なら明日に回す）
-        if (calendar.timeInMillis <= System.currentTimeMillis() + 10000) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        // 💡 Android 12以降かつ正確なアラーム権限がない場合は、大まかな時間で登録（クラッシュ回避）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            // 権限がない時はこちら（多少ズレますが動きます）
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-            Log.d("Notification", "正確なアラーム権限がないため、不正確なアラームで登録しました")
-        } else {
-            // ✨ 1分もズレずにスリープ中も強制発動させる設定に変更
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-            Log.d("Notification", "正確なリマインダーをスケジュールしました: " + String.format(Locale.getDefault(), "%02d:%02d", hour, minute))
-        }
-    }
-
     // アプリ起動時のパーミッションチェック時にも、オンの時だけスケジュールを走らせるように調整
     private fun checkAndRequestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -721,18 +540,80 @@ class MainActivity : AppCompatActivity() {
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED -> {
-                    scheduleDailyReminder() // 権限が許可されている場合は、アラームを scheduleDailyReminder() が呼ばれます
+                    NotificationHelper.scheduleDailyReminder(this)
                 }
                 else -> {
                     requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         } else {
-            scheduleDailyReminder()
+            NotificationHelper.scheduleDailyReminder(this)
         }
     }
 
-// ======= テスト通知 クラスの一番下あたりに追加 =======
+    // --- 範囲選択スクリーンショット機能 ---
+
+    private fun startSelectiveScreenshot() {
+        val bitmap = captureWebView() ?: return
+        val tempFile = File(cacheDir, "temp_screenshot.png")
+        try {
+            tempFile.outputStream().use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+
+            val destinationFile = File(cacheDir, "cropped_screenshot.png")
+            val options = UCrop.Options().apply {
+                setToolbarTitle("保存範囲を選択")
+                setFreeStyleCropEnabled(true) // 自由に範囲選択可能にする
+                setHideBottomControls(false) // 下部の操作パネルを表示
+            }
+
+            UCrop.of(android.net.Uri.fromFile(tempFile), android.net.Uri.fromFile(destinationFile))
+                .withOptions(options)
+                .start(this)
+        } catch (e: Exception) {
+            Log.e("Screenshot", "キャプチャの準備に失敗しました", e)
+            showToast("キャプチャの準備に失敗しました")
+        }
+    }
+
+    private fun captureWebView(): Bitmap? {
+        return try {
+            // WebViewの現在の表示内容をBitmapに描画
+            // 変更後（Kotlin KTX スタイル）
+            val bitmap = createBitmap(webView.width, webView.height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            webView.draw(canvas)
+            bitmap
+        } catch (e: Exception) {
+            Log.e("Screenshot", "WebViewのキャプチャに失敗", e)
+            null
+        }
+    }
+
+    // uCropの結果を受け取る
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            val resultUri = UCrop.getOutput(data!!)
+            if (resultUri != null) {
+                try {
+                    val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(resultUri))
+                    if (bitmap != null) {
+                        saveBitmapToStorage(bitmap)
+                        showToast("選択範囲をダウンロードフォルダに保存しました")
+                    }
+                } catch (_: Exception) {
+                    showToast("画像の保存に失敗しました")
+                }
+            }
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            val cropError = UCrop.getError(data!!)
+            Log.e("Screenshot", "Crop error: $cropError")
+        }
+    }
+
+    // ======= テスト通知 クラスの一番下あたりに追加 =======
 
     // 💡 必要なインポートが不足している場合は、関数の上かファイル上部に追加してください
     // import androidx.core.app.Person
@@ -752,9 +633,9 @@ class MainActivity : AppCompatActivity() {
 
         // 2. メッセージをランダムで抽選
         val messages = listOf(
-            "にゃっふにゃっふ！今日はもうオンゲキ遊んだ？忘れずに遊んでね！",
-            "にゃっふ！オンゲキもいいけどmaimaiもいいよね！",
-            "にゃっふ！？ログインボーナスは大丈夫？"
+            "にゃっふにゃっふ！これはテスト通知だよ！",
+            "にゃっふ！なんか機能を入れたいよね！",
+            "にゃっふ！？取り敢えず、考えよう！"
         )
         val randomMessage = messages.random()
 

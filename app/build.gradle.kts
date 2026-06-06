@@ -1,19 +1,17 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.licenseScribe.screen)
 }
 
 android {
     namespace = "com.miahina.ongekimai"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.miahina.ongekimai"
         minSdk = 29
-        targetSdk = 36
+        @Suppress("ExpiredTargetSdkVersion")
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -35,6 +33,10 @@ android {
     }
 }
 
+licenseScribeScreen {
+    generatedPackageName.set("com.miahina.ongekimai")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -44,15 +46,24 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("androidx.security:security-crypto:1.1.0-alpha06") //アカウント暗号化
-    implementation("com.google.code.gson:gson:2.10.1")
-    // 生体認証用のライブラリを追加
-    implementation("androidx.biometric:biometric:1.2.0-alpha05")
-    // WebViewを引っ張って更新
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    implementation(libs.androidx.security.crypto) // アカウント暗号化
+    implementation(libs.google.gson)
+    implementation(libs.androidx.biometric) // 生体認証
+    implementation(libs.androidx.swiperefreshlayout) // WebView更新
 
     // DataStore & Tink
-    implementation("androidx.datastore:datastore-preferences:1.1.2")
-    implementation("com.google.crypto.tink:tink-android:1.15.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.google.tink.android)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // 画像切り抜き用ライブラリ
+    implementation(libs.ucrop)
+    implementation(libs.androidx.exifinterface)
+
+    // OSSライセンス表示
+    implementation(libs.licenseScribe.runtime)
+
+    // Preference
+    implementation(libs.androidx.preference.ktx)
 }

@@ -79,40 +79,6 @@ class ReminderReceiver : BroadcastReceiver() {
         notificationManager.notify(999, builder.build())
 
         // 🔄 8. 翌日の同じ時間へリマインダーを自動再スケジュール（ループ処理）
-        val credentialManager = CredentialManager(context)
-        if (credentialManager.isReminderEnabled()) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-            val alarmIntent = Intent(context, ReminderReceiver::class.java)
-            val alarmPendingIntent = PendingIntent.getBroadcast(
-                context, 0, alarmIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val hour = credentialManager.getReminderHour()
-            val minute = credentialManager.getReminderMinute()
-
-            val nextCalendar = Calendar.getInstance().apply {
-                timeInMillis = System.currentTimeMillis()
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-                set(Calendar.SECOND, 0)
-                add(Calendar.DAY_OF_YEAR, 1) // 確実に「明日」にする
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    nextCalendar.timeInMillis,
-                    alarmPendingIntent
-                )
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    nextCalendar.timeInMillis,
-                    alarmPendingIntent
-                )
-            }
-            Log.d("ReminderReceiver", "翌日のリマインダーを再予約しました: ${hour}:${String.format("%02d", minute)}")
-        }
+        NotificationHelper.scheduleDailyReminder(context)
     }
 }

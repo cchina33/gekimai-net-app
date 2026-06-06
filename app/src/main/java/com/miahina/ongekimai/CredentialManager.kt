@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.miahina.ongekimai
 
 import android.content.Context
@@ -20,6 +21,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class CredentialManager(private val context: Context) {
 
+    @Suppress("DEPRECATION")
     private val aead: Aead by lazy {
         AeadConfig.register()
         AndroidKeysetManager.Builder()
@@ -31,6 +33,7 @@ class CredentialManager(private val context: Context) {
             .getPrimitive(Aead::class.java)
     }
 
+    @Suppress("DEPRECATION")
     private object PreferencesKeys {
         val SEGA_ID = stringPreferencesKey("sega_id")
         val SEGA_PASS = stringPreferencesKey("sega_pass")
@@ -57,6 +60,7 @@ class CredentialManager(private val context: Context) {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun migrateFromEncryptedPrefs() {
         try {
             val mainKey = MasterKey.Builder(context)
@@ -96,7 +100,7 @@ class CredentialManager(private val context: Context) {
             // 旧データを削除（オプション）
             // oldPrefs.edit().clear().apply()
         } catch (e: Exception) {
-            // 移行失敗時は次回に回す
+            android.util.Log.e("CredentialManager", "Migration failed", e)
         }
     }
 
@@ -106,7 +110,7 @@ class CredentialManager(private val context: Context) {
         return try {
             val encrypted = aead.encrypt(value.toByteArray(Charsets.UTF_8), null)
             Base64.encodeToString(encrypted, Base64.DEFAULT)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ""
         }
     }
@@ -116,7 +120,7 @@ class CredentialManager(private val context: Context) {
         return try {
             val decoded = Base64.decode(value, Base64.DEFAULT)
             String(aead.decrypt(decoded, null), Charsets.UTF_8)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             ""
         }
     }

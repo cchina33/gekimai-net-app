@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- アラームを鳴らすための権限 -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- 再起動時にリマインダーを再設定するための権限 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
 
     <application
@@ -21,19 +23,42 @@
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <activity
-
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.OngekiApp"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
-            android:screenOrientation="unspecified"
             tools:ignore="LockedOrientationActivity">
             <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="設定"
+            android:theme="@style/Theme.OngekiApp" />
+
+        <!-- uCrop 用の Activity -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            tools:ignore="LockedOrientationActivity"/>
+
+        <!-- OSS ライセンス表示 Activity -->
+        <activity
+            android:name=".OpenSourceLicensesActivity"
+            android:exported="false"
+            android:label="オープンソースライセンス" />
     </application>
 
 </manifest>

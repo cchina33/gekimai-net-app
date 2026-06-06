@@ -152,5 +152,20 @@
                 android:padding="8dp"/>
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"/>
+
+        <Button
+            android:id="@+id/btnLicenses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="オープンソースライセンス"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="?android:attr/textColorSecondary"/>
+
     </LinearLayout>
 </ScrollView>

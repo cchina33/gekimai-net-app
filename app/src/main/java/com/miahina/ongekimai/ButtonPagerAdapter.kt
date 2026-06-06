@@ -11,7 +11,8 @@ class ButtonPagerAdapter(
     private val onGetJewelsClick: () -> Unit,
     private val onAnalyzerClick: () -> Unit,
     private val onScoreLogClick: () -> Unit,
-    private val onNotificationTestClick: () -> Unit // 💡 追記：通知テスト用のコールバック
+    private val onSelectiveScreenshotClick: () -> Unit, // 範囲選択撮影用のコールバック
+    private val onNotificationTestClick: () -> Unit // 通知テスト用のコールバック
 ) : RecyclerView.Adapter<ButtonPagerAdapter.ButtonViewHolder>() {
 
     override fun getItemCount(): Int = 3 // 💡 「2」から「3」ページに変更[cite: 4]
@@ -44,6 +45,7 @@ class ButtonPagerAdapter(
             2 -> {
                 // 💡 【3ページ目】 新設したボタンに処理をバインド
                 holder.itemView.findViewById<Button>(R.id.btnNotificationTest)?.setOnClickListener { onNotificationTestClick() }
+                holder.itemView.findViewById<Button>(R.id.btnSelectiveScreenshot)?.setOnClickListener { onSelectiveScreenshotClick() }
             }
         }
     }
