@@ -1,15 +1,14 @@
 package com.miahina.ongekimai
 
+import android.util.Log
+import android.view.LayoutInflater
 import android.webkit.JavascriptInterface
 import androidx.appcompat.app.AlertDialog
-import android.view.LayoutInflater
-import android.widget.TextView
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import android.util.Log
+import com.miahina.ongekimai.databinding.DialogTallyReportBinding
 
 class WebAppInterface(private val activity: MainActivity) {
 
@@ -18,187 +17,95 @@ class WebAppInterface(private val activity: MainActivity) {
      */
     @JavascriptInterface
     fun sendResults(jsonResult: String) {
-
         activity.runOnUiThread {
             try {
                 val gson = Gson()
-
-                val listType =
-                    object : TypeToken<List<TallyResult>>() {}.type
-
-                val tallyList: List<TallyResult> =
-                    gson.fromJson(jsonResult, listType)
+                val listType = object : TypeToken<List<TallyResult>>() {}.type
+                val tallyList: List<TallyResult> = gson.fromJson(jsonResult, listType)
 
                 if (tallyList.isEmpty()) {
-
-                    AlertDialog.Builder(activity)
-                        .setMessage("プレイデータが見つかりませんでした。")
-                        .setPositiveButton("OK", null)
-                        .show()
-
+                    AlertDialog.Builder(activity).setMessage("プレイデータが見つかりませんでした。").setPositiveButton("OK", null).show()
                     return@runOnUiThread
                 }
 
+                val binding = DialogTallyReportBinding.inflate(LayoutInflater.from(activity))
                 val totalCount = tallyList.sumOf { it.count }
                 val totalCost = tallyList.sumOf { it.cost }
+                binding.tvTotalReport.text = activity.getString(R.string.total_report_format, totalCount, totalCost)
 
-                val dialogView =
-                    LayoutInflater.from(activity)
-                        .inflate(
-                            R.layout.dialog_tally_report,
-                            null
-                        )
+                binding.recyclerViewTally.layoutManager = LinearLayoutManager(activity)
+                binding.recyclerViewTally.adapter = TallyAdapter(tallyList)
+                binding.recyclerViewTally.addItemDecoration(DividerItemDecoration(activity, DividerItemDecoration.VERTICAL))
 
-                val tvTotalReport =
-                    dialogView.findViewById<TextView>(
-                        R.id.tvTotalReport
-                    )
-
-                tvTotalReport.text =
-                    "総プレイ回数: ${totalCount}回\n総使用金額: ${totalCost}円"
-
-                val recyclerView =
-                    dialogView.findViewById<RecyclerView>(
-                        R.id.recyclerViewTally
-                    )
-
-                recyclerView.layoutManager =
-                    LinearLayoutManager(activity)
-
-                recyclerView.adapter =
-                    TallyAdapter(tallyList)
-
-                recyclerView.addItemDecoration(
-                    DividerItemDecoration(
-                        activity,
-                        DividerItemDecoration.VERTICAL
-                    )
-                )
-
-                AlertDialog.Builder(activity)
-                    .setTitle("プレイ集計レポート")
-                    .setView(dialogView)
-                    .setPositiveButton("閉じる", null)
-                    .show()
-
+                AlertDialog.Builder(activity).setTitle("プレイ集計レポート").setView(binding.root).setPositiveButton("閉じる", null).show()
             } catch (e: Exception) {
-
-                Log.e(
-                    "MAL_ANALYZER",
-                    "sendResults Error",
-                    e
-                )
+                Log.e("MAL_ANALYZER", "sendResults Error", e)
             }
         }
     }
 
     /**
-     * ジュエル・しずく取得結果
+     * 親密度解析結果（Over Print）の受け取り
      */
+    @JavascriptInterface
+    fun receiveOverPrintData(jsonResult: String) {
+        activity.runOnUiThread {
+            try {
+                val gson = Gson()
+                val data: OverPrintData = gson.fromJson(jsonResult, OverPrintData::class.java)
+                
+                // MainActivityのメソッドを呼び出してDrawerの内容を更新
+                activity.updateIntimacyDrawer(data)
+                
+                // 解析完了を通知してDrawerを開く
+                activity.showToast("解析が完了しました。サイドメニューをご確認ください。")
+                activity.openIntimacyPage()
+                
+            } catch (e: Exception) {
+                Log.e("OVER_PRINT", "解析データの処理に失敗", e)
+                activity.showToast("解析データの処理に失敗しました")
+            }
+        }
+    }
+
     @JavascriptInterface
     fun sendJewelResults(jsonResult: String) {
-
         activity.runOnUiThread {
-
             try {
-
                 val gson = Gson()
-
-                val listType =
-                    object : TypeToken<List<String>>() {}.type
-
-                val jewelList: List<String> =
-                    gson.fromJson(jsonResult, listType)
-
-                val content =
-                    jewelList.joinToString("\n")
-
-                AlertDialog.Builder(activity)
-                    .setTitle("💎 ジュエル・しずく取得結果")
-                    .setMessage(content)
-                    .setPositiveButton("OK", null)
-                    .show()
-
+                val listType = object : TypeToken<List<String>>() {}.type
+                val jewelList: List<String> = gson.fromJson(jsonResult, listType)
+                val content = jewelList.joinToString("\n")
+                AlertDialog.Builder(activity).setTitle("💎 ジュエル・しずく取得結果").setMessage(content).setPositiveButton("OK", null).show()
             } catch (e: Exception) {
-
-                Log.e(
-                    "MAL_ANALYZER",
-                    "sendJewelResults Error",
-                    e
-                )
-
-                AlertDialog.Builder(activity)
-                    .setTitle("エラー")
-                    .setMessage("データの解析に失敗しました")
-                    .setPositiveButton("OK", null)
-                    .show()
+                Log.e("MAL_ANALYZER", "sendJewelResults Error", e)
             }
         }
     }
 
-    /**
-     * あならいざもどき画像受信
-     */
     @JavascriptInterface
     fun showPreviewImage(imageData: String) {
-
-        Log.d(
-            "MAL_ANALYZER",
-            "showPreviewImage 呼び出し"
-        )
-
-        Log.d(
-            "MAL_ANALYZER",
-            imageData.take(100)
-        )
-
         activity.runOnUiThread {
-
-            try {
-
-                when {
-
-                    imageData.startsWith("data:image") -> {
-
-                        Log.d(
-                            "MAL_ANALYZER",
-                            "Base64画像受信"
-                        )
-
-                        activity.showImagePreviewDialog(
-                            imageData
-                        )
-                    }
-
-                    imageData.startsWith("blob:") -> {
-
-                        Log.d(
-                            "MAL_ANALYZER",
-                            "Blob画像受信"
-                        )
-
-                        activity.handleGeneratedImage(
-                            imageData
-                        )
-                    }
-
-                    else -> {
-
-                        Log.d(
-                            "MAL_ANALYZER",
-                            "未知形式"
-                        )
-                    }
-                }
-
-            } catch (e: Exception) {
-
-                Log.e(
-                    "MAL_ANALYZER",
-                    "showPreviewImage Error",
-                    e
-                )
-            }
+            if (imageData.startsWith("data:image")) activity.showImagePreviewDialog(imageData)
+            else if (imageData.startsWith("blob:")) activity.handleGeneratedImage(imageData)
         }
+    }
+
+    /**
+     * JavaScript側からアプリのトースト通知を呼び出す
+     */
+    @JavascriptInterface
+    fun showToast(msg: String) {
+        activity.runOnUiThread {
+            activity.showToast(msg)
+        }
+    }
+
+    /**
+     * JavaScript側でのエラーをAndroid StudioのLogcatに出力する（デバッグ用）
+     */
+    @JavascriptInterface
+    fun logError(msg: String) {
+        Log.e("JS_SCRAPE_ERROR", msg)
     }
 }

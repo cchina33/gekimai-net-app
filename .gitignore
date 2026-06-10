@@ -12,4 +12,11 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# 署名鍵 (絶対に公開してはいけないファイル)
+*.jks
+*.keystore
+
+# ビルド成果物 (APKファイルなど)
+*.apk
+*.aar

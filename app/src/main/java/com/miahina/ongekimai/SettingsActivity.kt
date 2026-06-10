@@ -13,11 +13,12 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
-import com.google.android.material.appbar.MaterialToolbar
+import com.miahina.ongekimai.databinding.ActivitySettingsBinding
 import java.util.*
 
 class SettingsActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivitySettingsBinding
     private lateinit var credentialManager: CredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,12 +27,12 @@ class SettingsActivity : AppCompatActivity() {
         applySavedColorMode()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
+        binding = ActivitySettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(binding.toolbar)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.settings_root)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.settingsRoot) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(
                 left = systemBars.left,
@@ -45,7 +46,7 @@ class SettingsActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .replace(R.id.settings, SettingsFragment())
+                .replace(binding.settings.id, SettingsFragment())
                 .commit()
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -80,6 +81,11 @@ class SettingsActivity : AppCompatActivity() {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
             credentialManager = CredentialManager(requireContext())
 
+            // 数値入力に制限
+            findPreference<EditTextPreference>("intimacy_goal")?.setOnBindEditTextListener { editText ->
+                editText.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            }
+
             // 保存処理のリスナー
             findPreference<EditTextPreference>("sega_id")?.setOnPreferenceChangeListener { _, newValue ->
                 credentialManager.saveCredentials(newValue as String, credentialManager.getPassword())
@@ -93,10 +99,25 @@ class SettingsActivity : AppCompatActivity() {
                 credentialManager.saveScoreLogJs(newValue as String)
                 true
             }
+            findPreference<EditTextPreference>("intimacy_goal")?.setOnPreferenceChangeListener { _, newValue ->
+                val goal = (newValue as String).toIntOrNull() ?: 800
+                credentialManager.saveIntimacyGoal(goal)
+                true
+            }
+            findPreference<SwitchPreferenceCompat>("copy_paste_enabled")?.setOnPreferenceChangeListener { _, newValue ->
+                credentialManager.saveCopyPasteEnabled(newValue as Boolean)
+                true
+            }
 
             // カラーモード（独自ダイアログ）
             findPreference<Preference>("color_mode")?.setOnPreferenceClickListener {
                 showColorModeDialog()
+                true
+            }
+
+            // デフォルトWebView（独自ダイアログ）
+            findPreference<Preference>("default_webview")?.setOnPreferenceClickListener {
+                showDefaultWebViewDialog()
                 true
             }
 
@@ -120,6 +141,20 @@ class SettingsActivity : AppCompatActivity() {
                 true
             }
 
+            findPreference<Preference>("about_app")?.let { pref ->
+                val version = try {
+                    val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                    packageInfo.versionName
+                } catch (_: Exception) {
+                    "Unknown"
+                }
+                pref.summary = getString(R.string.version_format, version)
+                pref.setOnPreferenceClickListener {
+                    startActivity(android.content.Intent(requireContext(), AboutActivity::class.java))
+                    true
+                }
+            }
+
             updateValues()
         }
 
@@ -127,9 +162,12 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<EditTextPreference>("sega_id")?.text = credentialManager.getId()
             findPreference<EditTextPreference>("sega_pass")?.text = credentialManager.getPassword()
             findPreference<EditTextPreference>("score_log_js")?.text = credentialManager.getScoreLogJs()
+            findPreference<EditTextPreference>("intimacy_goal")?.text = credentialManager.getIntimacyGoal().toString()
+            findPreference<SwitchPreferenceCompat>("copy_paste_enabled")?.isChecked = credentialManager.isCopyPasteEnabled()
             findPreference<SwitchPreferenceCompat>("biometric_enabled")?.isChecked = credentialManager.isBiometricEnabled()
             findPreference<SwitchPreferenceCompat>("reminder_enabled")?.isChecked = credentialManager.isReminderEnabled()
             updateColorModeSummary()
+            updateDefaultWebViewSummary()
             updateReminderTimeSummary()
         }
 
@@ -137,6 +175,12 @@ class SettingsActivity : AppCompatActivity() {
             val entries = resources.getStringArray(R.array.color_mode_entries)
             val mode = credentialManager.getColorMode()
             findPreference<Preference>("color_mode")?.summary = entries.getOrElse(mode) { entries[0] }
+        }
+
+        private fun updateDefaultWebViewSummary() {
+            val entries = resources.getStringArray(R.array.default_webview_entries)
+            val mode = credentialManager.getDefaultWebView()
+            findPreference<Preference>("default_webview")?.summary = entries.getOrElse(mode) { entries[0] }
         }
 
         private fun showColorModeDialog() {
@@ -158,6 +202,23 @@ class SettingsActivity : AppCompatActivity() {
                 .show()
         }
 
+        private fun showDefaultWebViewDialog() {
+            val entries = resources.getStringArray(R.array.default_webview_entries)
+            var currentSelection = credentialManager.getDefaultWebView()
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("デフォルトのWebView設定")
+                .setSingleChoiceItems(entries, currentSelection) { _, which ->
+                    currentSelection = which
+                }
+                .setPositiveButton("OK") { _, _ ->
+                    credentialManager.saveDefaultWebView(currentSelection)
+                    updateDefaultWebViewSummary()
+                }
+                .setNegativeButton("キャンセル", null)
+                .show()
+        }
+
         private fun updateReminderTimeSummary() {
             val hour = credentialManager.getReminderHour()
             val minute = credentialManager.getReminderMinute()
@@ -167,11 +228,17 @@ class SettingsActivity : AppCompatActivity() {
         private fun showTimePicker() {
             val hour = credentialManager.getReminderHour()
             val minute = credentialManager.getReminderMinute()
-            TimePickerDialog(requireContext(), { _, h, m ->
-                credentialManager.saveReminderTime(h, m)
-                updateReminderTimeSummary()
-                NotificationHelper.scheduleDailyReminder(requireContext())
-            }, hour, minute, true).show()
+            TimePickerDialog(
+                requireContext(),
+                { _, h, m ->
+                    credentialManager.saveReminderTime(h, m)
+                    updateReminderTimeSummary()
+                    NotificationHelper.scheduleDailyReminder(requireContext())
+                },
+                hour,
+                minute,
+                true
+            ).show()
         }
     }
 }

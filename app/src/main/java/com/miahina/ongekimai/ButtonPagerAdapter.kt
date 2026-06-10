@@ -1,54 +1,52 @@
 package com.miahina.ongekimai
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
+import com.miahina.ongekimai.databinding.ItemButtonPage1Binding
+import com.miahina.ongekimai.databinding.ItemButtonPage2Binding
+import com.miahina.ongekimai.databinding.ItemButtonPage3Binding
 
 class ButtonPagerAdapter(
     private val onTallyClick: () -> Unit,
     private val onGetJewelsClick: () -> Unit,
     private val onAnalyzerClick: () -> Unit,
     private val onScoreLogClick: () -> Unit,
-    private val onSelectiveScreenshotClick: () -> Unit, // 範囲選択撮影用のコールバック
-    private val onNotificationTestClick: () -> Unit // 通知テスト用のコールバック
-) : RecyclerView.Adapter<ButtonPagerAdapter.ButtonViewHolder>() {
+    private val onSelectiveScreenshotClick: () -> Unit,
+    private val onOverPrintClick: () -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    override fun getItemCount(): Int = 3 // 💡 「2」から「3」ページに変更[cite: 4]
+    override fun getItemCount(): Int = 3
 
     override fun getItemViewType(position: Int): Int = position
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ButtonViewHolder {
-        // 💡 viewType（position）に応じて3つのレイアウトを切り替える[cite: 4]
-        val layoutId = when (viewType) {
-            0 -> R.layout.item_button_page1
-                1 -> R.layout.item_button_page2
-            else -> R.layout.item_button_page3 // 💡 追記：ページ3のレイアウトを指定
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            0 -> Page1ViewHolder(ItemButtonPage1Binding.inflate(inflater, parent, false))
+            1 -> Page2ViewHolder(ItemButtonPage2Binding.inflate(inflater, parent, false))
+            else -> Page3ViewHolder(ItemButtonPage3Binding.inflate(inflater, parent, false))
         }
-        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
-        return ButtonViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ButtonViewHolder, position: Int) {
-        when (position) {
-            0 -> {
-                // 【1ページ目】[cite: 4]
-                holder.itemView.findViewById<Button>(R.id.btnAnalyzer)?.setOnClickListener { onAnalyzerClick() }
-                holder.itemView.findViewById<Button>(R.id.btnGetJewels)?.setOnClickListener { onGetJewelsClick() }
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is Page1ViewHolder -> {
+                holder.binding.btnAnalyzer.setOnClickListener { onAnalyzerClick() }
+                holder.binding.btnGetJewels.setOnClickListener { onGetJewelsClick() }
             }
-            1 -> {
-                // 【2ページ目】[cite: 4]
-                holder.itemView.findViewById<Button>(R.id.btnTally)?.setOnClickListener { onTallyClick() }
-                holder.itemView.findViewById<Button>(R.id.btnScoreLog)?.setOnClickListener { onScoreLogClick() }
+            is Page2ViewHolder -> {
+                holder.binding.btnTally.setOnClickListener { onTallyClick() }
+                holder.binding.btnScoreLog.setOnClickListener { onScoreLogClick() }
             }
-            2 -> {
-                // 💡 【3ページ目】 新設したボタンに処理をバインド
-                holder.itemView.findViewById<Button>(R.id.btnNotificationTest)?.setOnClickListener { onNotificationTestClick() }
-                holder.itemView.findViewById<Button>(R.id.btnSelectiveScreenshot)?.setOnClickListener { onSelectiveScreenshotClick() }
+            is Page3ViewHolder -> {
+                holder.binding.btnSelectiveScreenshot.setOnClickListener { onSelectiveScreenshotClick() }
+                holder.binding.btnOverPrint.setOnClickListener { onOverPrintClick() }
             }
         }
     }
 
-    class ButtonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class Page1ViewHolder(val binding: ItemButtonPage1Binding) : RecyclerView.ViewHolder(binding.root)
+    class Page2ViewHolder(val binding: ItemButtonPage2Binding) : RecyclerView.ViewHolder(binding.root)
+    class Page3ViewHolder(val binding: ItemButtonPage3Binding) : RecyclerView.ViewHolder(binding.root)
 }

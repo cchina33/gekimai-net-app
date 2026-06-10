@@ -10,4 +10,8 @@
         <item>1</item>
         <item>2</item>
     </string-array>
+    <string-array name="default_webview_entries">
+        <item>オンゲキ(WebView)</item>
+        <item>maimai(WebView)</item>
+    </string-array>
 </resources>

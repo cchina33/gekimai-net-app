@@ -13,11 +13,11 @@
         android:text="@string/btn_crop_text" />
 
     <Button
-        android:id="@+id/btnNotificationTest"
+        android:id="@+id/btnOverPrint"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_margin="4dp"
-        android:backgroundTint="#4CAF50"
-        android:text="🔔 通知テスト" />
+        android:backgroundTint="#9C27B0"
+        android:text="@string/btn_overprint_text" />
 </LinearLayout>

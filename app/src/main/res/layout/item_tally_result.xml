@@ -10,28 +10,28 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.5"
-        android:text="2026/04/01"
+        android:text="@string/placeholder_date"
         android:textSize="16sp"
-        android:textColor="#333333"/>
+        android:textColor="?attr/colorOnSurface"/>
 
     <TextView
         android:id="@+id/tvCount"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="5回"
+        android:text="@string/placeholder_count"
         android:textSize="16sp"
         android:textAlignment="viewEnd"
-        android:textColor="#2196F3"/>
+        android:textColor="?attr/colorPrimary"/>
 
     <TextView
         android:id="@+id/tvCost"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.2"
-        android:text="500円"
+        android:text="@string/placeholder_money_amount"
         android:textSize="16sp"
         android:textAlignment="viewEnd"
         android:textStyle="bold"
-        android:textColor="#E91E63"/>
+        android:textColor="?attr/colorSecondary"/>
 </LinearLayout>

@@ -38,11 +38,15 @@ class CredentialManager(private val context: Context) {
         val SEGA_ID = stringPreferencesKey("sega_id")
         val SEGA_PASS = stringPreferencesKey("sega_pass")
         val COLOR_MODE = intPreferencesKey("color_mode")
+        val DEFAULT_WEBVIEW = intPreferencesKey("default_webview")
         val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val SCORE_LOG_JS = stringPreferencesKey("score_log_js")
         val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         val REMINDER_HOUR = intPreferencesKey("reminder_hour")
         val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
+        val INTIMACY_DATA = stringPreferencesKey("intimacy_data")
+        val INTIMACY_GOAL = intPreferencesKey("intimacy_goal")
+        val COPY_PASTE_ENABLED = booleanPreferencesKey("copy_paste_enabled")
         val MIGRATED = booleanPreferencesKey("migrated")
     }
 
@@ -149,6 +153,9 @@ class CredentialManager(private val context: Context) {
     fun saveColorMode(mode: Int) = setValueSync(PreferencesKeys.COLOR_MODE, mode)
     fun getColorMode(): Int = getValueSync(PreferencesKeys.COLOR_MODE, 0)
 
+    fun saveDefaultWebView(mode: Int) = setValueSync(PreferencesKeys.DEFAULT_WEBVIEW, mode)
+    fun getDefaultWebView(): Int = getValueSync(PreferencesKeys.DEFAULT_WEBVIEW, 0) // 0: Ongeki, 1: Maimai
+
     fun saveBiometricEnabled(isEnabled: Boolean) = setValueSync(PreferencesKeys.BIOMETRIC_ENABLED, isEnabled)
     fun isBiometricEnabled(): Boolean = getValueSync(PreferencesKeys.BIOMETRIC_ENABLED, false)
 
@@ -164,4 +171,13 @@ class CredentialManager(private val context: Context) {
         setValueSync(PreferencesKeys.REMINDER_HOUR, hour)
         setValueSync(PreferencesKeys.REMINDER_MINUTE, minute)
     }
+
+    fun saveIntimacyData(json: String) = setValueSync(PreferencesKeys.INTIMACY_DATA, json)
+    fun getIntimacyData(): String = getValueSync(PreferencesKeys.INTIMACY_DATA, "")
+
+    fun saveIntimacyGoal(goal: Int) = setValueSync(PreferencesKeys.INTIMACY_GOAL, goal)
+    fun getIntimacyGoal(): Int = getValueSync(PreferencesKeys.INTIMACY_GOAL, 800)
+
+    fun saveCopyPasteEnabled(enabled: Boolean) = setValueSync(PreferencesKeys.COPY_PASTE_ENABLED, enabled)
+    fun isCopyPasteEnabled(): Boolean = getValueSync(PreferencesKeys.COPY_PASTE_ENABLED, true)
 }

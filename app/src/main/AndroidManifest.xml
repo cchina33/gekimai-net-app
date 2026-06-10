@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- 再起動時にリマインダーを再設定するための権限 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- バイブレーション -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
 
     <application
@@ -46,6 +48,12 @@
             android:name=".SettingsActivity"
             android:exported="false"
             android:label="設定"
+            android:theme="@style/Theme.OngekiApp" />
+
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="@string/about_title"
             android:theme="@style/Theme.OngekiApp" />
 
         <!-- uCrop 用の Activity -->

@@ -24,6 +24,19 @@
             app:key="color_mode"
             app:title="カラーモード"
             app:useSimpleSummaryProvider="false" />
+        <Preference
+            app:key="default_webview"
+            app:title="デフォルトのWebView"
+            app:useSimpleSummaryProvider="false" />
+        <EditTextPreference
+            app:key="intimacy_goal"
+            app:title="親密度目標レベル"
+            app:defaultValue="800"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:key="copy_paste_enabled"
+            app:title="コピペ禁止の解除"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="セキュリティ">
@@ -46,6 +59,10 @@
         <Preference
             app:key="oss_licenses"
             app:title="オープンソースライセンス" />
+        <Preference
+            app:key="about_app"
+            app:title="@string/pref_about_title"
+            app:icon="@drawable/miadda_icon" />
     </PreferenceCategory>
 
 </PreferenceScreen>

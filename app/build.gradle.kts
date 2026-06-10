@@ -13,7 +13,7 @@ android {
         @Suppress("ExpiredTargetSdkVersion")
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,6 +26,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    buildFeatures {
+        viewBinding = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

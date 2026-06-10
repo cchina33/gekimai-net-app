@@ -9,10 +9,10 @@
         android:id="@+id/tvTotalReport"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="総プレイ回数: 0回\n総使用金額: 0円"
+        android:text="@string/placeholder_dash"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="#000000"
+        android:textColor="?attr/colorOnSurface"
         android:paddingBottom="12dp"/>
 
     <androidx.recyclerview.widget.RecyclerView

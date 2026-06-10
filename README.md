@@ -1,7 +1,7 @@
 # オンゲキ-maimaiツール 概要
 
 > [!IMPORTANT]
-> 本アプリは現在**ベータ版 (v0.5)** です。一部の機能が不安定な場合や、将来的に仕様が変更される可能性があります。
+> 本アプリは現在**ベータ版 (v0.6)** です。一部の機能が不安定な場合や、将来的に仕様が変更される可能性があります。
 
 ## 1. アプリ名
 - **オンゲキ-maimaiツール** (パッケージ: `com.miahina.ongekimai`)
@@ -11,55 +11,59 @@
 
 ## 3. 主要機能
 - **マルチサイト・ブラウジング**:
-    - オンゲキ-NET と maimaiでらっくす NET をワンタップで切り替え。
+    - オンゲキ-NET と maimaiでらっくす NET をサイドメニューからワンタップで切り替え。
     - WebView によるブラウジング。
+    - 設定により、起動時のデフォルトサイト（オンゲキ/maimai）を選択可能。
 - **拡張機能 (JavaScript 注入)**:
+    - **親密度データ解析 (Over Print)**: キャラクターの親密度を解析し、目標レベルまでに必要なアイテム数とマニーを自動算出。
     - **プレイ履歴集計**: 過去のプレイ履歴をバックグラウンドで取得・集計。
     - **ジュエル情報取得**: 所持ジュエル等の情報を同期。
-    - **あならいざもどき2**: あならいざもどきを起動。
-    - **ScoreLog 連携**: 外部サービス「OngekiScoreLog」へのスコア登録。
+    - **あならいざもどき2**: レーティング解析ツールを起動。
+    - **ScoreLog 連携**: 外部サービス「OngekiScoreLog」へのスコア登録（ブックマークレット対応）。
 - **自動ログイン & 認証情報管理**:
     - 設定された SEGA ID とパスワードを用いて、ログイン画面で自動的にフォームを入力。
     - `Jetpack DataStore (Preferences)` と `Google Tink` を使用し、認証情報を安全に暗号化（AES256_GCM）して保存。
-    - `EncryptedSharedPreferences` からの自動移行機能を搭載。
 - **セキュリティ**:
     - 生体認証（指紋・顔認証）またはデバイス認証によるアプリ起動ロック。
+    - 信頼できるドメイン（SEGA公式サイト）に対する SSL 証明書エラーの自動回避（ブラックアウト対策）。
 - **UX/UI**:
-    - ダークモード対応（OS設定連動および手動切り替え）。
-    - 下に引っ張って更新 (SwipeRefreshLayout)。
+    - ダークモード対応（Material 3 によるシステム連動カラー）。
+    - 下に引っ張って更新 (SwipeRefreshLayout) ＋ **バイブレーションフィードバック**。
     - 画面下部の ViewPager2 によるクイックアクションボタン。
-    - **範囲選択スクリーンショット**: `uCrop` を使用し、画面内の必要な部分だけを切り取って `Download` フォルダに保存。
-    - **OSSライセンス一覧**: アプリ内で使用しているライブラリのライセンス情報を一覧表示。
-    - WebView 内でのコピペ制限やズーム制限の強制解除。
+    - **範囲選択スクリーンショット**: `uCrop` を使用し、画面内の必要な部分だけを切り取って保存。
+    - **コピペ制限の解除**: 設定により、サイト側のコピー禁止や右クリック禁止を強制解除。
 - **通知機能**:
-    - 毎日指定した時刻にログインを促すリマインダー通知（美亜からのメッセージ）。
-    - 端末再起動後も通知設定を自動的に維持（BootReceiver）。
+    - 毎日指定した時刻にログインを促すリマインダー通知。
 
 ## 4. 技術スタック
 - **言語**: Kotlin
 - **ビルドシステム**: Gradle Kotlin DSL / Version Catalog (`libs.versions.toml`)
 - **ターゲットSDK**: Android 15 (API 37)
 - **UI コンポーネント**:
-    - `WebView` (JavaScriptInterface を使用した Android-JS 連携)
-    - `ViewPager2` (ボタンページ、画像プレビュー)
-    - `SwipeRefreshLayout`
-    - `androidx.preference` (標準的な設定画面の実装)
-    - `Material Design 3` & `Edge-to-Edge` (3ボタンナビゲーション等への最適化)
+    - `WebView` (JavaScriptInterface による Android-JS 連携)
+    - `ViewPager2` / `RecyclerView` (ボタンパネル、親密度表)
+    - `Material Design 3` (動的カラー対応)
 - **Android API**:
     - `BiometricPrompt` (生体認証)
-    - `AlarmManager` (正確なアラーム設定による通知)
-    - `NotificationManager` (通知チャンネル管理)
+    - `AlarmManager` / `NotificationManager` (通知システム)
     - `Jetpack DataStore` & `Google Tink` (セキュリティ・永続化)
 
 ## 5. ファイル構成 (主要なもの)
-- `MainActivity.kt`: アプリのメインロジック、WebView 制御、範囲選択撮影の開始。
-- `SettingsActivity.kt`: `PreferenceFragmentCompat` を使用した設定画面。
-- `CredentialManager.kt`: `DataStore` + `Tink` による安全な設定・認証情報管理。
-- `NotificationHelper.kt`: 通知チャンネル管理およびリマインダー予約ロジック。
-- `ReminderReceiver.kt` / `BootReceiver.kt`: 通知実行および再起動時の再予約処理。
-- `assets/`: 注入用の JavaScript ファイル (`analyzer.js`, `get_jewels.js`, `on-mai_PlayTally.js` 等)。
-- `res/xml/root_preferences.xml`: 設定画面の構造定義。
-- `res/layout/`:
-    - `activity_main.xml`: メイン画面。
-    - `activity_settings.xml`: 設定画面（Toolbar 搭載）。
-    - `item_button_page*.xml`: ViewPager 用のボタンレイアウト。
+- `MainActivity.kt`: アプリのメインロジック、WebView 制御、ページ遷移管理。
+- `AboutActivity.kt`: バージョン情報や GitHub リンクを表示する説明画面。
+- `IntimacyCalculator.kt`: 親密度や必要リソースの計算ロジック。
+- `CredentialManager.kt`: 設定・認証情報の暗号化保存。
+- `assets/intimacy_data.js`: 親密度データを抽出するための注入用 JS。
+
+## 6. 更新履歴
+- **v0.6 (2024/05/20)**
+    - 親密度データ解析機能を大幅強化（カラム表示対応、目標レベル計算、所持アイテム反映）。
+    - 起動時のデフォルト WebView 設定を追加（オンゲキ/maimai）。
+    - ページ更新時のバイブレーションフィードバックを実装。
+    - 「このアプリについて」画面を追加し、GitHub 連携を実装。
+    - SSL 証明書エラーによるブラックアウト問題を修正。
+    - コピペ禁止解除の ON/OFF 設定を追加。
+    - 全体的なコードのリファクタリングと警告メッセージの解消。
+- **v0.5**
+    - 初期ベータ版リリース。
+    - 基本的な WebView 機能と自動ログインを実装。
