@@ -1,0 +1,10 @@
+{
+  "version_code": 2,
+  "version_name": "0.7",
+  "download_url": "https://github.com/cchina33/gekimai-net-app/releases",
+  "changelog": [
+    "デイドリーム計算機能の追加",
+    "ジュエル自動取得機能の改善",
+    "不具合の修正"
+  ]
+}
