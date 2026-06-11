@@ -78,12 +78,12 @@
     - 初期ベータ版リリース。
     - 基本的な WebView 機能と自動ログインを実装。
 
-## 7. アプリアイコンについて
+## 7. アプリアイコンについて  
 アプリアイコンは柏木美亜のデイドリームエンジェルズのイラストに設定しております。
-このイラストは「株式会社セガ フェイブ」が制作されたものであり、アプリ開発者が制作したものではありません。
+このイラストは[「株式会社セガ フェイブ」](https://www.segafave.co.jp/)が制作されたものであり、アプリ開発者が制作したものではありません。
 使用している画像の権利は「株式会社セガ フェイブ」に帰属します。
 
 ## 8. スクリプトについて
-- あならいざもどき2:(あならいざもどき2)[https://sgimera.github.io/mai_RatingAnalyzer/maidx_all_in_one_tool.html]を使用しています。正しく動作するようにアプリ側で調整が入っています。
-- ScoreLog 連携:(OngekiScoreLog)[https://ongeki-score.net/]のサイトでブックマークレットを取得し設定でコピペの上、実行するとスコアが登録されます。
-- 親密度データ解析:(Friendly Score Over Print)[https://mel225.sakura.ne.jp/friendly/] by mel225様が制作されたjsを参考にして制作しております。
+- あならいざもどき2:[あならいざもどき2](https://sgimera.github.io/mai_RatingAnalyzer/maidx_all_in_one_tool.html)を使用しています。正しく動作するようにアプリ側で調整が入っています。  
+- ScoreLog 連携:[OngekiScoreLog](https://ongeki-score.net/)のサイトでブックマークレットを取得し設定でコピペの上、実行するとスコアが登録されます。  
+- 親密度データ解析:[Friendly Score Over Print](https://mel225.sakura.ne.jp/friendly/) by mel225様が制作されたjsを参考にして制作しております。  
