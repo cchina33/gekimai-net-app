@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">オンゲキ-maimaiツール</string>
     <string name="btn_analyzer_text">あならいざもどき2</string>
-    <string name="btn_jewedrops_text">ジェル+しずく数取得</string>
+    <string name="btn_jewedrops_text">ジュエル+しずく数取得</string>
     <string name="btn_playcount_text">プレイ履歴集計</string>
     <string name="btn_scorelog_text">ScoreLog登録</string>
     <string name="btn_settings_text">設定</string>
@@ -39,4 +39,18 @@
     <string name="menu_ongeki">オンゲキ(WebView)</string>
     <string name="menu_maimai">maimai(WebView)</string>
     <string name="menu_intimacy">親密度データ表</string>
+    <string name="btn_daydream_calc">デイドリーム計算</string>
+    <string name="daydream_calc_title">デイドリーム計算機</string>
+    <string name="label_current_fairies">現在のフェアリーズ所持数 (0〜5)</string>
+    <string name="label_current_jewels">現在の所持ジュエル数</string>
+    <string name="btn_fetch_jewels">NETから取得</string>
+    <string name="result_required_jewels">必要ジュエル数: %1$d</string>
+    <string name="result_remaining_jewels">不足分: %1$d</string>
+    <string name="hint_fairy_count">枚数を入力</string>
+    <string name="hint_jewel_count">ジュエル数を入力</string>
+    <string name="update_dialog_title">アップデートのお知らせ</string>
+    <string name="update_dialog_message">新しいバージョン (%1$s) が利用可能です。\n\n更新内容:\n%2$s</string>
+    <string name="update_btn_download">ダウンロード</string>
+    <string name="update_btn_later">後で</string>
+    <string name="update_toast_error">アップデート情報の取得に失敗しました</string>
 </resources>

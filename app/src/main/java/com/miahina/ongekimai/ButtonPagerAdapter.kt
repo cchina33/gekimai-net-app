@@ -13,7 +13,8 @@ class ButtonPagerAdapter(
     private val onAnalyzerClick: () -> Unit,
     private val onScoreLogClick: () -> Unit,
     private val onSelectiveScreenshotClick: () -> Unit,
-    private val onOverPrintClick: () -> Unit
+    private val onOverPrintClick: () -> Unit,
+    private val onDaydreamCalcClick: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun getItemCount(): Int = 3
@@ -42,6 +43,7 @@ class ButtonPagerAdapter(
             is Page3ViewHolder -> {
                 holder.binding.btnSelectiveScreenshot.setOnClickListener { onSelectiveScreenshotClick() }
                 holder.binding.btnOverPrint.setOnClickListener { onOverPrintClick() }
+                holder.binding.btnDaydreamCalc.setOnClickListener { onDaydreamCalcClick() }
             }
         }
     }

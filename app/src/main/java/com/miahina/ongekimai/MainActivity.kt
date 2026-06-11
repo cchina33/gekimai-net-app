@@ -45,6 +45,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.google.gson.Gson
 import com.miahina.ongekimai.databinding.ActivityMainBinding
+import com.miahina.ongekimai.databinding.DialogDaydreamCalcBinding
 import com.yalantis.ucrop.UCrop
 import java.io.File
 
@@ -57,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var credentialManager: CredentialManager
     private lateinit var intimacyAdapter: IntimacyAdapter
+    private var daydreamDialogBinding: DialogDaydreamCalcBinding? = null
 
     // 現在のWeb表示モードを保持 (0: Ongeki, 1: Maimai)
     private var currentWebMode = -1
@@ -170,6 +172,9 @@ class MainActivity : AppCompatActivity() {
         // WebView初期化
         initWebView()
 
+        // アップデートチェック
+        UpdateManager(this).checkForUpdates()
+
         // 💡 生体認証が有効な場合は、認証成功後にロードを行う
         if (!credentialManager.isBiometricEnabled()) {
             loadDefaultWebView()
@@ -181,8 +186,10 @@ class MainActivity : AppCompatActivity() {
             onGetJewelsClick = { executeGetJewels() },
             onAnalyzerClick = { executeAnalyzer() },
             onScoreLogClick = { executeScoreLog() },
-            onSelectiveScreenshotClick = { startSelectiveScreenshot() }
-        ) { executeOverPrint() }
+            onSelectiveScreenshotClick = { startSelectiveScreenshot() },
+            onOverPrintClick = { executeOverPrint() },
+            onDaydreamCalcClick = { showDaydreamCalculator() }
+        )
         binding.buttonViewPager.adapter = adapter
 
         // 親密度テーブル設定
@@ -644,6 +651,79 @@ class MainActivity : AppCompatActivity() {
                 }
                 .setNegativeButton("閉じる", null)
                 .show()
+        }
+    }
+
+    private fun showDaydreamCalculator() {
+        val dialogBinding = DialogDaydreamCalcBinding.inflate(layoutInflater)
+        daydreamDialogBinding = dialogBinding
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.daydream_calc_title)
+            .setView(dialogBinding.root)
+            .setPositiveButton("閉じる") { _, _ -> daydreamDialogBinding = null }
+            .setOnCancelListener { daydreamDialogBinding = null }
+            .create()
+
+        val textWatcher = object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                calculateDaydream(dialogBinding)
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        }
+
+        dialogBinding.etFairyCount.addTextChangedListener(textWatcher)
+        dialogBinding.etCurrentJewels.addTextChangedListener(textWatcher)
+
+        dialogBinding.btnFetchJewels.setOnClickListener {
+            executeFetchJewelsForCalc()
+        }
+
+        // 初期表示を更新
+        calculateDaydream(dialogBinding)
+
+        dialog.show()
+    }
+
+    private fun calculateDaydream(dialogBinding: DialogDaydreamCalcBinding) {
+        val fairyInput = dialogBinding.etFairyCount.text.toString()
+        val currentJewelsInput = dialogBinding.etCurrentJewels.text.toString()
+
+        val count = fairyInput.toIntOrNull() ?: 0
+        val currentJewels = currentJewelsInput.toIntOrNull() ?: 0
+
+        // 1枚目: 5,000, 2枚目: 5,000, 3枚目: 6,000, 4枚目: 7,000, 5枚目: 10,000
+        // エンジェルズ 1枚目: 10,000 (フェアリーズ5枚が必要)
+        val requiredTotal = when (count) {
+            0 -> 5000 + 5000 + 6000 + 7000 + 10000 + 10000
+            1 -> 5000 + 6000 + 7000 + 10000 + 10000
+            2 -> 6000 + 7000 + 10000 + 10000
+            3 -> 7000 + 10000 + 10000
+            4 -> 10000 + 10000
+            5 -> 10000
+            else -> 0
+        }
+
+        val remaining = (requiredTotal - currentJewels).coerceAtLeast(0)
+
+        dialogBinding.tvResultJewels.text = getString(R.string.result_required_jewels, requiredTotal)
+        dialogBinding.tvRemainingJewels.text = getString(R.string.result_remaining_jewels, remaining)
+    }
+
+    fun updateDaydreamJewels(jewels: Int) {
+        runOnUiThread {
+            daydreamDialogBinding?.let {
+                it.etCurrentJewels.setText(jewels.toString())
+                showToast("ジュエル数を更新しました: $jewels")
+            }
+        }
+    }
+
+    private fun executeFetchJewelsForCalc() {
+        showToast("ジュエル数を取得中...")
+        val js = loadJsFromAssets("dda_jewel_calculation.js")
+        if (js.isNotEmpty()) {
+            binding.webView.evaluateJavascript(js, null)
         }
     }
 }

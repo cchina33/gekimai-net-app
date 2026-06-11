@@ -84,6 +84,13 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
+    fun receiveJewelsForCalc(jewels: Int) {
+        activity.runOnUiThread {
+            activity.updateDaydreamJewels(jewels)
+        }
+    }
+
+    @JavascriptInterface
     fun showPreviewImage(imageData: String) {
         activity.runOnUiThread {
             if (imageData.startsWith("data:image")) activity.showImagePreviewDialog(imageData)
